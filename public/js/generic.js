@@ -102,17 +102,6 @@ $(document).ready(function() {
   ///////////////////
 
   //***Donation Modal
-  setTimeout(function() {
-    $("#donate-modal").modal({'show': true});
-  }, 1500);
-
-  $(".donation-box").click(function() {
-    $("#donate-modal").modal('toggle');
-  });
-
-  $("#donation-box-button").click(function(e) {
-    e.stopPropagation();
-  });
   ///////////////////
 
   $("#loginForm").submit(function(e) {
