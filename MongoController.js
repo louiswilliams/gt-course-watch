@@ -6,14 +6,10 @@ var mongoose = require('mongoose'),
 // MONGO SETUP
 //
 
-function MongoController(url) {
-  var connectionURL = url,
-      _this = this;
-
-  mongoose.connect(connectionURL);
+function MongoController() {
+  _this = this;
 
   this._myDB = mongoose.connection;
-  this._myDB.on('error', console.error.bind(console, 'connection error'));
   this.db_open = false;
 
   //investigate why closure with _this wont work..
@@ -77,10 +73,16 @@ function MongoController(url) {
   this.successStat = mongoose.model('successStat', this.successStatSchema);
   this.user = mongoose.model('user', this.userSchema);
   this.req_archive = mongoose.model('req_archive', this.reqArchiveSchema)
+}
 
-  this._myDB.once('open', function() {
-    console.log('db successfully opened');
+MongoController.prototype.connect = function(connectionURL, callback) {
+
+  mongoose.connect(connectionURL);
+  mongoose.connection.on('error', console.error.bind(console, 'connection error'));
+  mongoose.connection.on('open', function() {
+    console.log('db successfully connected');
     _this.db_open = true;
+    callback(mongoose.connection)
   });
 }
 
@@ -96,7 +98,9 @@ MongoController.prototype.userAccessor = function (email, f) {
 MongoController.prototype.getFulfillmentStats = function(func) {
   _this = this;
 
-  if(!_this.db_open) return;
+  if(!_this.db_open) {
+    console.log("DB not open");
+  }
 
   _this.successStat.find(function(err1, successes){
     _this.confirmationStat.find(function(err2, confirmations){

@@ -32,6 +32,8 @@ var mongo_url = 'mongodb://localhost/gtcw',
     TERM_PRODUCER_DELAY, //TermManager
     TERM_CONSUMER_DELAY; //CatalogConnector
 
+console.log("HTTPS ENABLED:", HTTPS_ENABLED);
+
 //*CONSTANTS
 var millisInSecond = 1000,
     millisInMinute = millisInSecond*60,
@@ -57,8 +59,8 @@ if(process.env.BUILD_ENVIRONMENT == 'production') {
   }
 
   if(PROD_EMAIL_SERVICE == 'gmail') {
-    var mailerEmail = "gtcoursewatch.mailer@gmail.com";
-    var mailerPass = fs.readFileSync("/home/ec2-user/gtcw_gmail_pass.txt").toString();
+    var mailerEmail = "louieaw@gmail.com";
+    var mailerPass = fs.readFileSync("gtcw_gmail_pass.txt").toString();
     var myMailer = new Mailer(mailerEmail, 
       { service: 'gmail', 
         pass: mailerPass });
@@ -82,20 +84,22 @@ if(process.env.BUILD_ENVIRONMENT == 'production') {
 
   registerPartials();
 } else {
-  var https_opts = {
-    key: fs.readFileSync("/Users/vikram/amazon_ec2/ssl_key.pem"),
-    cert: fs.readFileSync("/Users/vikram/amazon_ec2/gtcw_ssl_certs/www_gtcoursewatch_us.crt"),
-    ca: [
-      fs.readFileSync("/Users/vikram/amazon_ec2/gtcw_ssl_certs/AddTrustExternalCARoot.crt"),
-      fs.readFileSync("/Users/vikram/amazon_ec2/gtcw_ssl_certs/COMODORSAAddTrustCA.crt"),
-      fs.readFileSync("/Users/vikram/amazon_ec2/gtcw_ssl_certs/COMODORSADomainValidationSecureServerCA.crt")
-    ]
-  }
+  if (HTTPS_ENABLED) {
+    var https_opts = {
+      key: fs.readFileSync("/Users/vikram/amazon_ec2/ssl_key.pem"),
+      cert: fs.readFileSync("/Users/vikram/amazon_ec2/gtcw_ssl_certs/www_gtcoursewatch_us.crt"),
+      ca: [
+        fs.readFileSync("/Users/vikram/amazon_ec2/gtcw_ssl_certs/AddTrustExternalCARoot.crt"),
+        fs.readFileSync("/Users/vikram/amazon_ec2/gtcw_ssl_certs/COMODORSAAddTrustCA.crt"),
+        fs.readFileSync("/Users/vikram/amazon_ec2/gtcw_ssl_certs/COMODORSADomainValidationSecureServerCA.crt")
+      ]
+    }
 
-  var secureServer = require('https').createServer(https_opts, app).listen(8000);
+    var secureServer = require('https').createServer(https_opts, app).listen(8000);
+  }
   var hostName = "http://localhost:8080";
-  var mailerEmail = "gtcoursewatch.mailer@gmail.com";
-  var mailerPass = fs.readFileSync("/Users/vikram/amazon_ec2/gtcw_gmail_pass.txt").toString();
+  var mailerEmail = "louieaw@gmail.com";
+  var mailerPass = fs.readFileSync("gtcw_gmail_pass.txt").toString();
   var myMailer = new Mailer(mailerEmail, 
     { service: 'gmail', 
       pass: mailerPass });
@@ -126,7 +130,13 @@ if(HTTPS_ENABLED) io.listen(secureServer);
 
 
 //*INITIALIZE CUSTOM MODULES
-var myMongoController = new MongoController(mongo_url);
+var myMongoController = new MongoController();
+myMongoController.connect(mongo_url, function (connection) {
+  
+  myMongoController.getFulfillmentStats(function(stats) {
+    fulfillment_stats = stats;
+  });
+});
 // var myTermManager = new TermManager(mongo_url, TERM_PRODUCER_DELAY);
 // var myCatalogConnector = 
 //   new CatalogConnector(mongo_url, myTermManager, TERM_CONSUMER_DELAY);
@@ -142,10 +152,6 @@ var fulfillment_stats = {
           total: 0,
           rate: 0
         };
-
-myMongoController.getFulfillmentStats(function(stats) {
-  fulfillment_stats = stats;
-});
 
 initPollers();
 
@@ -929,14 +935,14 @@ function isEmail(email) {
 }
 
 function strip_whitespace(input) {
-  return input.replace(/\s+/g, "");
+  // return input.replace(/\s+/g, "");
+  return input
 }
 
 function strip_whitespace_from_obj(input_obj) {
+  return;
   for (var key in input_obj) {
-    if (input_obj.hasOwnProperty(key)) {
-      input_obj[key] = strip_whitespace(input_obj[key]);
-    }
+    input_obj[key] = strip_whitespace(input_obj[key]);
   }
 }
 
